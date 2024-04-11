@@ -20,7 +20,7 @@ Menjelaskan pernyataan masalah latar belakang:
 
     ### Solution statements
 
-    -   Melakukan improvement pada _naive bayes_ sebagai _baseline model_ dengan _hyperparameter tuning_ menggunakan _grid search_, menggunakan F1 Score sebagai metrik evaluasi.
+    -   Melakukan improvement pada _Random Forest_ sebagai _baseline model_ dengan _hyperparameter tuning_ menggunakan _grid search_ dan melakukan cross validation dengan split sebanyak 3.
 
 ## Data Understanding
 
@@ -28,7 +28,7 @@ Data yang digunakan dalam proyek ini diambil dari [Kaggle Datasets](https://www.
 
 1.  Reddit_Combi.csv
 2.  Reddit_Title.csv
-3.  Twitter\_ Non-Advert-Tabelle 1.csv
+3.  Twitter_Non-Advert-Tabelle 1.csv
 4.  Twitter_Full.csv
 
 Namun, proyek ini hanya akan menggunakan dataset pertama (Reddit_Combi.csv)
@@ -40,47 +40,68 @@ Namun, proyek ini hanya akan menggunakan dataset pertama (Reddit_Combi.csv)
 -   Body_Title : merupakan judul artikel dan isi artikel yang digabung menjadi satu kumpulan teks.
 -   label : merupakan indikator stres, dimana 1 mengindikasikan stres, 0 tidak stres
 
-**Rubrik/Kriteria Tambahan (Opsional)**:
-
--   Melakukan beberapa tahapan yang diperlukan untuk memahami data, contohnya teknik visualisasi data atau exploratory data analysis.
-
 ## Data Preparation
 
-Pada bagian ini Anda menerapkan dan menyebutkan teknik data preparation yang dilakukan. Teknik yang digunakan pada notebook dan laporan harus berurutan.
+### EDA (Exploratory Data Analysis)
 
-**Rubrik/Kriteria Tambahan (Opsional)**:
+-   Menvisualisasikan distribusi label
+-   Menvisualisasikan sebaran panjang teks artikel berdasarkan label
+-   Membuang outlier berdasarkan panjang teks dengan metode IQR
 
--   Menjelaskan proses data preparation yang dilakukan
--   Menjelaskan alasan mengapa diperlukan tahapan data preparation tersebut.
+### Data preprocessing
 
-## Modeling
+Karena terdapat ketidakseimbangan label pada data, maka akan digunakan teknik _over sampling_ dengan menduplikasi data yang tidak seimbang sampai jumlahnya sama besar. Selanjutnya, setelah melalui proses trial & error, data akan diambil sebanyak 2000 sampel saja, karena lebih dari itu memakan waktu yang sangat lama ketika melakukan preprocessing. Data yang disampel sudah seimbang.
 
-Tahapan ini membahas mengenai model machine learning yang digunakan untuk menyelesaikan permasalahan. Anda perlu menjelaskan tahapan dan parameter yang digunakan pada proses pemodelan.
+Data akan displit menjadi train dan test dengan test size sebesar 10%.
 
-**Rubrik/Kriteria Tambahan (Opsional)**:
+Untuk memastikan bahwa teks dapat memberikan informasi yang berharga maka dilakukan tahapan preprocessing, sebagai berikut:
 
--   Menjelaskan kelebihan dan kekurangan dari setiap algoritma yang digunakan.
--   Jika menggunakan satu algoritma pada solution statement, lakukan proses improvement terhadap model dengan hyperparameter tuning. **Jelaskan proses improvement yang dilakukan**.
--   Jika menggunakan dua atau lebih algoritma pada solution statement, maka pilih model terbaik sebagai solusi. **Jelaskan mengapa memilih model tersebut sebagai model terbaik**.
+1.  Mengubah semua teks menjadi huruf kecil (menjaga konsistensi teks).
+2.  Membuang noise seperti; special character, angka, tautan, dll (membuang informasi yang tidak berharga untuk model).
+3.  Memperbaiki kesalahan ejaan (menjaga konsistensi penulisan kata).
+4.  Tokenisasi teks (memecah teks menjadi token atau kata secara individu).
+5.  Membuang stop words (membuang kata-kata yang sering muncul dan tidak terlalu bermakna).
+6.  Membatasi jumlah kata sebanyak 512 kata (menghindari teks yang terlalu panjang)
+7.  Melakukan stemming (mengembalikan kata menjadi kata dasar dengan membuang imbuhan).
+8.  Vektorisasi teks menggunakan TF-IDF (mengubah teks menjadi angka agar dapat dimengerti model).
 
-## Evaluation
+### Modeling
 
-Pada bagian ini anda perlu menyebutkan metrik evaluasi yang digunakan. Lalu anda perlu menjelaskan hasil proyek berdasarkan metrik evaluasi yang digunakan.
+RandomForestClassifier akan digunakan sebagai baseline model dan dilakukan hyperparameter tuning, dengan hyperparameter yang dituning sebagai berikut:
 
-Sebagai contoh, Anda memiih kasus klasifikasi dan menggunakan metrik **akurasi, precision, recall, dan F1 score**. Jelaskan mengenai beberapa hal berikut:
+-   n_estimators: [50, 100, 200]
+-   max_depth: [16, 32]
+-   max_features: [sqrt, log2]
+-   min_samples_split: [2, 5]
 
--   Penjelasan mengenai metrik yang digunakan
--   Menjelaskan hasil proyek berdasarkan metrik evaluasi
+Untuk memastikan performa model yang robust, maka dilakukan juga cross validation dengan jumlah split sebanyak 3. Metrik utama yang digunakan dalam tuning adalah akurasi, model dengan akurasi tertinggi akan dianggap sebagai model terbaik.
 
-Ingatlah, metrik evaluasi yang digunakan harus sesuai dengan konteks data, problem statement, dan solusi yang diinginkan.
+### Evaluation
 
-**Rubrik/Kriteria Tambahan (Opsional)**:
+Hasil hyperparameter tuning pada RandomForestClassifier menghasilkan model terbaik dengan hyperparameter sebagai berikut:
 
--   Menjelaskan formula metrik dan bagaimana metrik tersebut bekerja.
+-   n_estimators: 100
+-   max_depth: 32
+-   max_features: sqrt
+-   min_samples_split: 2
 
-**---Ini adalah bagian akhir laporan---**
+Model akan dievaluasi pada test set untuk memastikan bahwa model tidak overfit, dan dapat memprediksi data yang belum pernah dilihat secara akurat. Terdapat 4 metrik evaluasi yang digunakan:
 
-_Catatan:_
+-   $ Accuracy = \frac{(TP+TN)}{(TP+TN+FN+FP)} $
+-   $ Precision = \frac{TP}{(TP+FP)} $
+-   $ Recall = \frac{TP}{(TP+FN)} $
+-   $ F1 = \frac{(2*precision*recall)}{(precision+recall)} $
 
--   _Anda dapat menambahkan gambar, kode, atau tabel ke dalam laporan jika diperlukan. Temukan caranya pada contoh dokumen markdown di situs editor [Dillinger](https://dillinger.io/), [Github Guides: Mastering markdown](https://guides.github.com/features/mastering-markdown/), atau sumber lain di internet. Semangat!_
--   Jika terdapat penjelasan yang harus menyertakan code snippet, tuliskan dengan sewajarnya. Tidak perlu menuliskan keseluruhan kode project, cukup bagian yang ingin dijelaskan saja.
+Keterangan:
+
+-   TP (True Positive) = Prediksi 1, Ground Truth 1
+-   TN (True Negative) = Prediksi 0, Ground Truth 0
+-   FP (False Positive) = Prediksi 1, Ground Truth 0
+-   FN (False Negative) = Prediksi 0, Ground Truth 1
+
+Model terbaik menghasilkan hasil sebagai berikut:
+
+-   Accuracy: 96.5%
+-   Recall: 94%
+-   Precision: 98.9%
+-   F1: 96.5%
